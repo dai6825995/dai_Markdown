@@ -345,3 +345,186 @@ add(e) {
     console.log(this, e)
 }
 ```
+## 生命周期
+### componentWillMount  挂载前
+### componentDidMount  挂载后
+### componentWillUpdate  更新前
+### componentDidUpdate  更新后
+### componentWillUnmount  卸载前
+### 注意点：当 数据发生变化的时候 (setState调用) , 当前组件 以及其所有的子组件 都会重新 render
+
+## 组件通信
+### 父传子和vue一样
+### 子传父需要 在向子组件 传递方法的时候 直接 纠正好 this的问题 否则 在子组件 调用的时候 this 会 指向 子组件自己的 props
+- 可以用bind修改，不过更推荐使用箭头函数,比较直观的观察参数
+  
+## 类组件性能优化
+- react 组件内部 只要调用setState 不管数据 是否发生变化 当前组件 以及其 所有子组件 都会重新 render , 挂载钩子 不会重新执行
+### shouldComponentUpdate
+- 根据组件 当前的 状态 (props,state) 是否发生变化 决定是否 重新 render
+- ```
+    //  根据组件 当前的 状态 (props,state) 是否发生变化 决定是否 重新 render
+    shouldComponentUpdate(newprops, newstate) {
+        console.log(newstate)
+        console.log(this.state)
+        if (newstate.num == this.state.num) {
+            return false
+        } else {
+            return true
+        }
+    }
+  ```
+- 返回的是false不会进行更新，true就会进行更新
+### PureComponent
+- 把类组件的 继承 从component 变成 PureComponent 就能实现 只有 状态 发生变化 才会重新 render
+
+## 操作DOM
+### 遍历多个的问题
+- ```
+    {
+        (() => {
+            let list = []
+            for (let i = 0; i < 6; i++) {
+                list.push(
+                    // <button ref={'btn' + i} key={i}>{i}</button>
+                    <button ref="btn" key={i}>{i}</button>
+                )
+            }
+            return list
+        })()
+    }
+    <hr />
+    <button onClick={
+        () => {
+            // 多个元素 ref 相同 通过 this.refs 访问到的是最后一个 dom
+            //  单个dom 可以使用该方式
+            console.log(this.refs)
+        }
+    }>访问DOM</button>
+   ```
+### createRef
+- ```
+    constructor(props) {
+        super(props)
+        this.state = {
+        }
+        this.btn = createRef()
+    }
+    render() {
+        return (
+            <div>
+                {
+                    (() => {
+                        let list = []
+                        for (let i = 0; i < 6; i++) {
+                            list.push(
+                                <button ref={this.btn} key={i}>{i}</button>
+                            )
+                        }
+                        return list
+                    })()
+                }
+                <button onClick={
+                    () => {
+                        //  createRef 如果帮定 多个 DOm 访问到的 也是 最后一个 
+                        //  适合 操作 单独DOM
+                        console.log(this.btn.current)
+                    }
+                }>访问DOM</button>
+            </div>
+        )
+    }
+   ```
+### 批量操作DOM
+- ```
+    constructor(props) {
+        super(props)
+        this.state = {
+            btns: []
+        }
+    }
+    render() {
+        return (
+            <div>
+                {
+                    (() => {
+                        let list = []
+                        for (let i = 0; i < 6; i++) {
+                            list.push(
+                                <button ref={el => {
+                                    this.state.btns.push(el)
+                                }} key={i}>{i}</button>
+                            )
+                        }
+                        return list
+                    })()
+                }
+                <hr />
+                <button onClick={
+                    () => {
+                        console.log(this.state.btns)
+                    }
+                }>访问DOM</button>
+            </div>
+        )
+    }
+   ```
+## 路由
+- ```
+    const {
+        HashRouter, //包裹路由区域 内部定义 路由切换
+        Route, //包裹路由组件 以及 匹配规则
+        Link,// 路由切换 组件 a
+        Switch, //路由匹配成功之后 不在 接着向下 匹配
+    } = ReactRouterDOM
+  ```
+### 路由组件
+- ```
+    let Index = () => <h1>首页</h1>
+  ```
+### 路由匹配问题
+- ```
+    render() {
+        return (
+            <div>
+                {
+                    // <h1>网页头部--公共区域</h1>
+                }
+                <HashRouter>
+                    <div>
+                        <Link to="/">首页</Link>
+                        <Link to="/list">列表页</Link>
+                    </div>
+                    {
+                        //路由匹配成功之后 不在 接着向下 匹配
+                    }
+                    <Switch>
+                        <Route path="/">
+                            <Index></Index>
+                        </Route>
+                        <Route path="/list">
+                            <List />
+                        </Route>
+                    </Switch>
+                </HashRouter>
+                {
+                    // <h1>网页尾部--公共区域</h1>
+                }
+            </div>
+        )
+    }
+  ```
+- 更换顺序
+- 使用精准匹配 exact
+- ```
+    <Switch>
+        {
+            // exact 精准匹配 要求 地址 完全 一致
+        }
+        <Route path="/" exact component={Index} />
+        <Route path="/list" component={List} />
+    </Switch>
+    ```
+
+  
+
